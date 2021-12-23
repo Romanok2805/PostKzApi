@@ -30,22 +30,6 @@ class PostKZ:
         else:
             raise LoginError()
     
-    def login_mob(self, login=None, phone=None, password=None, androidToken="", iosToken=""): # мне кажется надо будет делать отдельный класс для mobile
-        data_to_send = {"androidToken": androidToken, "iosToken": iosToken, "password": password}
-
-        if login:
-            data_to_send["login"] = login
-        elif phone:
-            data_to_send["phoneNumber"] = phone
-        else:
-            raise NeedProvideLoginOrPhoneNumber()
-
-        response = requests.post("https://post.kz/auth/mobile/auth", headers=self.headers, json=data_to_send)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise LoginError() # Сервер не присылает причину ошибки:(
-    
     def get_IIN_info(self, iinBin) -> IIN:
         response = requests.post("https://post.kz/mail-app/api/checkIinBin", headers=self.headers_web, json={"iinBin": iinBin})
         if response.status_code == 202:
@@ -54,8 +38,7 @@ class PostKZ:
             raise CheckIINError(ErrorApiResponse(json.loads(response.text)))
     
     def register(self, fullName, login, phone_number, password) -> ServerDefaultResponse:
-        data_to_send = {"fullName": fullName, "login": login, "mobileNumber": phone_number, "password": password}
-        response = requests.post("https://post.kz/mail-app/api/v2/register", headers=self.headers_web, json=data_to_send)
+        response = requests.post("https://post.kz/mail-app/api/v2/register", headers=self.headers_web, json={"fullName": fullName, "login": login, "mobileNumber": phone_number, "password": password})
         if response.status_code == 201:
             return ServerDefaultResponse(json.loads(response.text))
         else:
@@ -73,9 +56,11 @@ class PostKZ:
         if response.status_code == 200:
             return ServerDefaultResponse(json.loads(response.text))
         else:
-            raise RegisterError() # Нету ответа
+            raise RegisterError()
     
     def reset_password1(self, login, phone_number, isOrg = False) -> ServerDefaultResponse:
+        """reset_login1 и это одно и то же, только тут надо еще указать логин, а там только номер телефона"""
+
         response = requests.post("https://post.kz/mail-app/public/v2/forgot_password_step1", headers = self.headers_web, json = {"login": login, "mobileNumber": phone_number, "captcha": "", "isOrg": isOrg})
         if response.status_code == 200:
             return ServerDefaultResponse(json.loads(response.text))
