@@ -13,8 +13,7 @@ class PostKZMobile:
             a = self.headers.copy()
             a["x-auth-postkz"] = token
             return a
-        else:
-            return self.headers
+        return self.headers
 
     def login(self, login=None, phone=None, password=None, androidToken="", iosToken=""):
         data_to_send = {"androidToken": androidToken, "iosToken": iosToken, "password": password}
@@ -30,7 +29,7 @@ class PostKZMobile:
 
         if response.status_code == 200:
             return AccountMobile(json.loads(response.text))
-        elif response.status_code == 418:
+        if response.status_code == 418:
             raise WrongLoginOrPass()
         else:
             raise LoginError()
@@ -39,22 +38,19 @@ class PostKZMobile:
         response = requests.post("https://post.kz/auth/mobile/access", headers=self.headers, json={"refresh": refresh, "androidToken": androidToken, "iosToken": iosToken})
         if response.status_code == 200:
             return json.loads(response.text)["access"]
-        else:
-            raise ReloginError()
+        raise ReloginError()
 
     def logout(self, access, refresh) -> bool:
         response = requests.post("https://post.kz/auth/mobile/logout", headers=self.headers, json={"access": access, "refresh": refresh})
         if response.status_code == 200:
             return True
-        else:
-            raise LogoutError()
+        raise LogoutError()
     
     def search_by_phone(self, token, phone) -> ParcelList:
         response = requests.get(f"https://post.kz/mail-app/api/parcellog/searchByPhone/{phone}", headers = self.get_headers(token))
         if response.status_code == 204:
             return ParcelList(json.loads(response.text))
-        else:
-            raise SearchByPhoneError()
+        raise SearchByPhoneError()
     
     def is_parcel_exists(self, token, barcode) -> bool:
         """Возвращает true, если посылка вообще существует"""
@@ -62,22 +58,19 @@ class PostKZMobile:
         response = requests.get("https://post.kz/mail-app/api/tracking", headers = self.get_headers(token), data=barcode)
         if response.status_code == 201:
             return json.loads(response.text)["result"]
-        else:
-            raise IsParcelExistsError()
+        raise IsParcelExistsError()
     
     def get_parces_events(self, barcode, token=None):
         response = requests.get(f"https://post.kz/external-api/tracking/api/v2/{barcode}/events", headers = self.get_headers(token))
         if response.status_code == 200:
             return EventsParcel(json.loads(response.text))
-        else:
-            raise GetParcelEventsError()
+        raise GetParcelEventsError()
     
     def get_parcel_info(self, barcode, token, postamat=True):
         response = requests.post("https://post.kz/mail-app/api/v2/parcellog/getPhoneNumber", headers = self.get_headers(token), json={"barcode": barcode, "postamat": postamat})
         if response.status_code == 200:
             return ParcelInfo(json.loads(response.text))
-        else:
-            raise GetParcelInfoError()
+        raise GetParcelInfoError()
     
     def get_position_postamat(self, barcode, index, token = None):
         response = requests.get("https://post.kz/mail-app/api/v2/parcellog/getPositionPostamat", headers = self.get_headers(token))
